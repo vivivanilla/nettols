@@ -1,4 +1,4 @@
-FROM golang:1.17 as gobuild
+FROM golang:1.19 as gobuild
 RUN cd $HOME \
  && git clone https://github.com/etcd-io/etcd -b v3.5.2 \
  && cd etcd \
@@ -7,6 +7,10 @@ RUN cd $HOME \
  && git clone https://github.com/derailed/k9s.git -b v0.25.18 \
  && cd k9s \
  && make build
+RUN cd $HOME \
+ && git clone https://github.com/kubernetes-sigs/cri-tools.git -b v1.25.0 \
+ && cd cri-tools \
+ && make crictl
 RUN cd $HOME \
  && OS=$(go env GOOS); ARCH=$(go env GOARCH); curl -sSL -o cmctl.tar.gz https://github.com/cert-manager/cert-manager/releases/download/v1.7.2/cmctl-$OS-$ARCH.tar.gz \
  && tar xzf cmctl.tar.gz
@@ -26,6 +30,7 @@ RUN curl -L https://raw.githubusercontent.com/drwetter/testssl.sh/3.0/testssl.sh
 COPY --from=gobuild /root/etcd/bin/etcdctl /usr/bin/etcdctl
 COPY --from=gobuild /root/k9s/execs/k9s /usr/bin/k9s
 COPY --from=gobuild /root/cmctl /usr/bin/cmctl
+COPY --from=gobuild /root/cri-tools/build/bin/crictl /usr/bin/crictl
 
 ENTRYPOINT [ "/bin/bash", "-l" ]
 
